@@ -128,7 +128,7 @@ what breaks our model.
 Slider configuration is just object we need to store, but we don't need to query for it. So it's much simpler to store it in a JSON format
 in one column of "banner_set" table.
 
-Our ***BannerSet** Doctrine mapping file would look like:
+***BannerSet*** Doctrine mapping file would look like:
 
 ```yaml
 entity:
@@ -144,7 +144,11 @@ entity:
 And that's it!
 
 Obviously, we need to provide the ***Serializer*** mapping for ***Slider1*** and ***Slider2*** 
-(what can be done in different ways, eg. via Annotations - check the JMSSerializer documentation for more details).
+(what can be done in different ways, eg. via Annotations - check the [JMSSerializer documentation](http://jmsyst.com/libs/serializer) for more details).
+
+# Symfony 2/3 integration
+
+See [WebitDoctrineJsonBundle](https://github.com/dbojdo/Doctrine-JSON-Bundle) Symfony 2/3 integration.
 
 # Tests
 
