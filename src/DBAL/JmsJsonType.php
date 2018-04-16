@@ -72,6 +72,10 @@ class JmsJsonType extends Type
      */
     public function convertToPHPValue($value, AbstractPlatform $platform)
     {
+        if($value === null) {
+            return null;
+        }
+        
         @list($type, $json) = explode('::', $value, 2);
 
         $phpValue = $this->serializer()->deserialize($json, $type, 'json');
