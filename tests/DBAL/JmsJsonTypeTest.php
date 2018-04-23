@@ -105,6 +105,32 @@ class JmsJsonTypeTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
+    public function shouldNotConvertNullToDatabaseValue()
+    {
+        $this->initializeJmsJsonType($this->serializer, $this->typeResolver);
+
+        $value = null;
+        $databaseValue = null;
+
+        $this->assertEquals($value, $this->type->convertToDatabaseValue($databaseValue, $this->platform));
+    }
+
+    /**
+     * @test
+     */
+    public function shouldNotConvertNullToPhpValue()
+    {
+        $this->initializeJmsJsonType($this->serializer, $this->typeResolver);
+
+        $value = null;
+        $databaseValue = null;
+
+        $this->assertEquals($value, $this->type->convertToPHPValue($databaseValue, $this->platform));
+    }
+
+    /**
+     * @test
+     */
     public function shouldConvertToPhpValue()
     {
         $this->initializeJmsJsonType($this->serializer, $this->typeResolver);
