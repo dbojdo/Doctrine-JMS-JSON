@@ -89,6 +89,7 @@ class JmsJsonTypeFunctionalTest extends \PHPUnit_Framework_TestCase
         $date = new \DateTime();
 
         return array(
+            array(null, null),
             array(1, 'integer::1'),
             array(1.25, 'double::1.25'),
             array(true, 'boolean::true'),
