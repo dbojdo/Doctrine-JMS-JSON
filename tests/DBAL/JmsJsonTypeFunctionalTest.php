@@ -95,16 +95,16 @@ class JmsJsonTypeFunctionalTest extends \PHPUnit_Framework_TestCase
             array(true, json_encode(array('_jms_type' => 'boolean', 'data' => true))),
             array(false, json_encode(array('_jms_type' => 'boolean', 'data' => false))),
             array('abcd', json_encode(array('_jms_type' => 'string', 'data' => 'abcd'))),
-            array(array('k1' => 'v1'), json_encode(array('_jms_type' => 'array', 'data' => array('k1' => 'v1')))),
-            array(array('v1', 'v2'), json_encode(array('_jms_type' => 'array', 'data' => array('v1', 'v2')))),
+            array(array('k1' => 'v1'), json_encode(array('_jms_type' => 'array<string,string>', 'data' => array('k1' => 'v1')))),
+            array(array('v1', 'v2'), json_encode(array('_jms_type' => 'array<integer,string>', 'data' => array('v1', 'v2')))),
             array($date, json_encode(array('_jms_type' => 'DateTime', 'data' => $date->format(\DateTime::ISO8601)))),
             array(
                 new ArrayCollection(array('v1', 'v2')),
-                json_encode(array('_jms_type' => 'Doctrine\Common\Collections\ArrayCollection', 'data' => array("v1", "v2")))
+                json_encode(array('_jms_type' => 'Doctrine\Common\Collections\ArrayCollection<integer,string>', 'data' => array("v1", "v2")))
             ),
             array(
                 new ArrayCollection(array('k1' => 'v1', 'k2' => 'v2')),
-                json_encode(array('_jms_type' => 'Doctrine\Common\Collections\ArrayCollection', 'data' => array("k1" => "v1", "k2" => "v2")))
+                json_encode(array('_jms_type' => 'Doctrine\Common\Collections\ArrayCollection<string,string>', 'data' => array("k1" => "v1", "k2" => "v2")))
             ),
             array(
                 new ArrayCollection(
@@ -115,7 +115,7 @@ class JmsJsonTypeFunctionalTest extends \PHPUnit_Framework_TestCase
                 ),
                 json_encode(
                     array(
-                        '_jms_type' => 'Doctrine\Common\Collections\ArrayCollection<Webit\DoctrineJmsJson\Tests\DBAL\Dummy>',
+                        '_jms_type' => 'Doctrine\Common\Collections\ArrayCollection<integer,Webit\DoctrineJmsJson\Tests\DBAL\Dummy>',
                         'data' => array(
                             array('name' => 'item1', 'date' => $date->format(DATE_ISO8601)),
                             array('name' => 'item2', 'date' => $date->format(DATE_ISO8601)),

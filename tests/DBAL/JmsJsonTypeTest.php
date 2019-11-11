@@ -61,7 +61,7 @@ class JmsJsonTypeTest extends \PHPUnit_Framework_TestCase
         $sqlDeclaration = 'SQL Declaration';
 
         $this->platform
-            ->shouldReceive('getClobTypeDeclarationSQL')
+            ->shouldReceive('getJsonTypeDeclarationSQL')
             ->with($fieldDeclaration)
             ->once()
             ->andReturn($sqlDeclaration);

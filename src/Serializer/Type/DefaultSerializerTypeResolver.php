@@ -18,6 +18,7 @@ class DefaultSerializerTypeResolver implements SerializerTypeResolver
      */
     public function resolveType($value)
     {
+
         if (is_scalar($value)) {
             return gettype($value);
         }
@@ -29,7 +30,20 @@ class DefaultSerializerTypeResolver implements SerializerTypeResolver
                     return 'array';
                 },
                 function (array $arValue) {
-                    return current($arValue);
+                    if (count($arValue) > 0) {
+                        return array_shift($arValue);
+                    }
+
+                    return null;
+                },
+                function (array $arValue) {
+                    $keys = array_keys($arValue);
+
+                    if ($keys == array()) {
+                        return null;
+                    }
+
+                    return $keys !== range(0, count($keys) - 1) ? 'string' : 'integer';
                 }
             );
         }
@@ -41,7 +55,20 @@ class DefaultSerializerTypeResolver implements SerializerTypeResolver
                     return get_class($collection);
                 },
                 function (\Doctrine\Common\Collections\Collection $collection) {
-                    return $collection->first();
+                    if ($collection->count() > 0) {
+                        return $collection->first();
+                    }
+
+                    return null;
+                },
+                function (\Doctrine\Common\Collections\Collection $collection) {
+                    $keys = $collection->getKeys();
+
+                    if ($keys === array()) {
+                        return null;
+                    }
+
+                    return $keys !== range(0, count($keys) - 1) ? 'string' : 'integer';
                 }
             );
         }
@@ -61,15 +88,21 @@ class DefaultSerializerTypeResolver implements SerializerTypeResolver
      * @param Collection $collection
      * @param \callable $collectionType
      * @param \callable $firstItem
+     * @param \callable $keyType
      * @return string
      */
-    private function resolveCollectionType($collection, $collectionType, $firstItem)
+    private function resolveCollectionType($collection, $collectionType, $firstItem, $keyType)
     {
         $type = call_user_func($collectionType, $collection);
         $item = call_user_func($firstItem, $collection);
+        $keyType = call_user_func($keyType, $collection);
 
-        if (! is_object($item)) {
+        if ($item === null) {
             return $type;
+        }
+
+        if ($keyType) {
+            return sprintf('%s<%s,%s>', $type, $keyType, $this->resolveType($item));
         }
 
         return sprintf('%s<%s>', $type, $this->resolveType($item));
