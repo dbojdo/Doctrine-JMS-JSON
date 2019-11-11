@@ -11,7 +11,7 @@ namespace Webit\DoctrineJmsJson\DBAL;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\Type;
-use JMS\Serializer\SerializerInterface;
+use JMS\Serializer\Serializer;
 use Webit\DoctrineJmsJson\DBAL\Exception\JmsJsonTypeInitializationException;
 use Webit\DoctrineJmsJson\Serializer\Type\SerializerTypeResolver;
 
@@ -20,7 +20,7 @@ class JmsJsonType extends Type
     const NAME = 'jms_json';
 
     /**
-     * @var SerializerInterface
+     * @var Serializer
      */
     private static $serializer;
 
@@ -30,10 +30,10 @@ class JmsJsonType extends Type
     private static $typeResolver;
 
     /**
-     * @param SerializerInterface $serializer
+     * @param Serializer $serializer
      * @param SerializerTypeResolver $typeResolver
      */
-    public static function initialize(SerializerInterface $serializer, SerializerTypeResolver $typeResolver)
+    public static function initialize(Serializer $serializer, SerializerTypeResolver $typeResolver)
     {
         if (self::$serializer) {
             throw new JmsJsonTypeInitializationException(
@@ -62,9 +62,12 @@ class JmsJsonType extends Type
             return null;
         }
 
-        $type = $this->typeResolver()->resolveType($value);
+        $dbValue = array(
+            '_jms_type' => $this->typeResolver()->resolveType($value),
+            'data' => $value
+        );
 
-        return sprintf('%s::%s', $type, $this->serializer()->serialize($value, 'json'));
+        return $this->serializer()->serialize($dbValue, 'json');
     }
 
     /**
@@ -75,10 +78,18 @@ class JmsJsonType extends Type
         if($value === null) {
             return null;
         }
-        
-        @list($type, $json) = explode('::', $value, 2);
 
-        $phpValue = $this->serializer()->deserialize($json, $type, 'json');
+        $arData = @json_decode($value, true);
+        $type = $arData['_jms_type'];
+        $phpValue = $arData['data'];
+
+        if (is_array($phpValue)) {
+            $phpValue = $this->serializer()->fromArray($phpValue, $type);
+        } else {
+            $phpValue = $this->serializer()->fromArray(array($phpValue), sprintf('array<%s>', $type));
+            $phpValue = array_shift($phpValue);
+        }
+
         if (! $this->isCollection($type)) {
             return $phpValue;
         }
@@ -103,7 +114,7 @@ class JmsJsonType extends Type
     }
 
     /**
-     * @return SerializerInterface
+     * @return Serializer
      */
     private function serializer()
     {

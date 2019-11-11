@@ -86,25 +86,25 @@ class JmsJsonTypeFunctionalTest extends \PHPUnit_Framework_TestCase
 
     public function values()
     {
-        $date = new \DateTime();
+        $date = date_create('2019-11-02 12:33:21');
 
         return array(
             array(null, null),
-            array(1, 'integer::1'),
-            array(1.25, 'double::1.25'),
-            array(true, 'boolean::true'),
-            array(false, 'boolean::false'),
-            array('abcd', 'string::"abcd"'),
-            array(array('k1' => 'v1'), 'array::{"k1":"v1"}'),
-            array(array('v1', 'v2'), 'array::["v1","v2"]'),
-            array($date, sprintf('DateTime::"%s"', $date->format(\DateTime::ISO8601))),
+            array(1, json_encode(array('_jms_type' => 'integer', 'data' => 1))),
+            array(1.25, json_encode(array('_jms_type' => 'double', 'data' => 1.25))),
+            array(true, json_encode(array('_jms_type' => 'boolean', 'data' => true))),
+            array(false, json_encode(array('_jms_type' => 'boolean', 'data' => false))),
+            array('abcd', json_encode(array('_jms_type' => 'string', 'data' => 'abcd'))),
+            array(array('k1' => 'v1'), json_encode(array('_jms_type' => 'array', 'data' => array('k1' => 'v1')))),
+            array(array('v1', 'v2'), json_encode(array('_jms_type' => 'array', 'data' => array('v1', 'v2')))),
+            array($date, json_encode(array('_jms_type' => 'DateTime', 'data' => $date->format(\DateTime::ISO8601)))),
             array(
                 new ArrayCollection(array('v1', 'v2')),
-                'Doctrine\Common\Collections\ArrayCollection::["v1","v2"]'
+                json_encode(array('_jms_type' => 'Doctrine\Common\Collections\ArrayCollection', 'data' => array("v1", "v2")))
             ),
             array(
                 new ArrayCollection(array('k1' => 'v1', 'k2' => 'v2')),
-                'Doctrine\Common\Collections\ArrayCollection::{"k1":"v1","k2":"v2"}'
+                json_encode(array('_jms_type' => 'Doctrine\Common\Collections\ArrayCollection', 'data' => array("k1" => "v1", "k2" => "v2")))
             ),
             array(
                 new ArrayCollection(
@@ -113,10 +113,14 @@ class JmsJsonTypeFunctionalTest extends \PHPUnit_Framework_TestCase
                         new Dummy('item2', $date)
                     )
                 ),
-                sprintf(
-                    'Doctrine\Common\Collections\ArrayCollection<Webit\DoctrineJmsJson\Tests\DBAL\Dummy>::[{"name":"item1","date":"%s"},{"name":"item2","date":"%s"}]',
-                    $date->format(DATE_ISO8601),
-                    $date->format(DATE_ISO8601)
+                json_encode(
+                    array(
+                        '_jms_type' => 'Doctrine\Common\Collections\ArrayCollection<Webit\DoctrineJmsJson\Tests\DBAL\Dummy>',
+                        'data' => array(
+                            array('name' => 'item1', 'date' => $date->format(DATE_ISO8601)),
+                            array('name' => 'item2', 'date' => $date->format(DATE_ISO8601)),
+                        )
+                    )
                 )
             ),
             array(
@@ -130,10 +134,24 @@ class JmsJsonTypeFunctionalTest extends \PHPUnit_Framework_TestCase
                         )
                     )
                 ),
-                sprintf(
-                    'Webit\DoctrineJmsJson\Tests\DBAL\DummyAggregate::{"id":123,"name":"myName","items":[{"name":"item1","date":"%s"},{"name":"item2","date":"%s"}]}',
-                    $date->format(DATE_ISO8601),
-                    $date->format(DATE_ISO8601)
+                json_encode(
+                    array(
+                        '_jms_type' => 'Webit\DoctrineJmsJson\Tests\DBAL\DummyAggregate',
+                        'data' => array(
+                            'id' => 123,
+                            'name' => 'myName',
+                            'items' => array(
+                                array(
+                                    'name' => 'item1',
+                                    'date' => $date->format(DATE_ISO8601)
+                                ),
+                                array(
+                                    'name' => 'item2',
+                                    'date' => $date->format(DATE_ISO8601)
+                                )
+                            )
+                        )
+                    )
                 )
             )
         );

@@ -8,7 +8,6 @@
 
 namespace Webit\DoctrineJmsJson\Tests\DBAL;
 
-use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\Type;
@@ -30,7 +29,7 @@ class JmsJsonTypeTest extends \PHPUnit_Framework_TestCase
     private $platform;
 
     /**
-     * @var SerializerInterface|\Mockery\MockInterface
+     * @var Serializer|\Mockery\MockInterface
      */
     private $serializer;
 
@@ -48,7 +47,7 @@ class JmsJsonTypeTest extends \PHPUnit_Framework_TestCase
 
         $this->type = Type::getType(JmsJsonType::NAME);
         $this->platform = \Mockery::mock('Doctrine\DBAL\Platforms\AbstractPlatform');
-        $this->serializer = \Mockery::mock('JMS\Serializer\SerializerInterface');
+        $this->serializer = \Mockery::mock('JMS\Serializer\Serializer');
         $this->typeResolver = \Mockery::mock('Webit\DoctrineJmsJson\Serializer\Type\SerializerTypeResolver');
     }
 
@@ -71,83 +70,6 @@ class JmsJsonTypeTest extends \PHPUnit_Framework_TestCase
             $sqlDeclaration,
             $this->type->getSQLDeclaration($fieldDeclaration, $this->platform)
         );
-    }
-
-    /**
-     * @test
-     */
-    public function shouldConvertToDatabaseValueUsingSerializer()
-    {
-        $this->initializeJmsJsonType($this->serializer, $this->typeResolver);
-
-        $type = 'MyResolvedType<option>';
-        $value = array('k' => 'value');
-        $jsonEncodedValue = json_encode($value);
-
-        $this->typeResolver
-            ->shouldReceive('resolveType')
-            ->with($value)
-            ->once()
-            ->andReturn($type);
-
-        $this->serializer
-            ->shouldReceive('serialize')
-            ->with($value, 'json')
-            ->once()
-            ->andReturn($jsonEncodedValue);
-
-        $this->assertEquals(
-            sprintf('%s::%s', $type, $jsonEncodedValue),
-            $this->type->convertToDatabaseValue($value, $this->platform)
-        );
-    }
-
-    /**
-     * @test
-     */
-    public function shouldNotConvertNullToDatabaseValue()
-    {
-        $this->initializeJmsJsonType($this->serializer, $this->typeResolver);
-
-        $value = null;
-        $databaseValue = null;
-
-        $this->assertEquals($value, $this->type->convertToDatabaseValue($databaseValue, $this->platform));
-    }
-
-    /**
-     * @test
-     */
-    public function shouldNotConvertNullToPhpValue()
-    {
-        $this->initializeJmsJsonType($this->serializer, $this->typeResolver);
-
-        $value = null;
-        $databaseValue = null;
-
-        $this->assertEquals($value, $this->type->convertToPHPValue($databaseValue, $this->platform));
-    }
-
-    /**
-     * @test
-     */
-    public function shouldConvertToPhpValue()
-    {
-        $this->initializeJmsJsonType($this->serializer, $this->typeResolver);
-
-        $type = 'MyResolvedType<option>';
-        $value = array('k' => 'value');
-        $jsonEncodedValue = json_encode($value);
-
-        $databaseValue = sprintf('%s::%s', $type, $jsonEncodedValue);
-
-        $this->serializer
-            ->shouldReceive('deserialize')
-            ->with($jsonEncodedValue, $type, 'json')
-            ->once()
-            ->andReturn($value);
-
-        $this->assertEquals($value, $this->type->convertToPHPValue($databaseValue, $this->platform));
     }
 
     /**
@@ -188,7 +110,7 @@ class JmsJsonTypeTest extends \PHPUnit_Framework_TestCase
     {
         $this->initializeJmsJsonType(null, null);
 
-        $this->type->convertToPHPValue('type::json', $this->platform);
+        $this->type->convertToPHPValue('some-data', $this->platform);
     }
 
     /**
@@ -201,34 +123,6 @@ class JmsJsonTypeTest extends \PHPUnit_Framework_TestCase
         $this->initializeJmsJsonType(null, null);
 
         $this->type->convertToDatabaseValue('xxxx', $this->platform);
-    }
-
-    /**
-     * @test
-     * @dataProvider arrayCollectionDeserializationResults
-     */
-    public function shouldFixArrayCollectionDeserialization($type, $deserializationResult)
-    {
-        $json = '"value-to-be-deserialized"';
-
-        $value = sprintf('%s::%s', $type, $json);
-        $this->initializeJmsJsonType($this->serializer, $this->typeResolver);
-
-        $this->serializer->shouldReceive('deserialize')->with($json, $type, 'json')->once()->andReturn($deserializationResult);
-
-        $this->assertEquals(new ArrayCollection($deserializationResult), $this->type->convertToPHPValue($value, $this->platform));
-    }
-
-    public function arrayCollectionDeserializationResults()
-    {
-        return array(
-            array(
-                'ArrayCollection', array('v1', 'v2')
-            ),
-            array(
-                'ArrayCollection<stdClass>', array(new \stdClass(), new \stdClass())
-            ),
-        );
     }
 
     /**
