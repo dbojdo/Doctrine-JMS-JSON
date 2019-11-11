@@ -2,6 +2,7 @@
     "name": "webit/doctrine-jms-json",
     "description": "Converts complex objects using JMS Serializer",
     "type": "library",
+    "license": "MIT",
     "authors": [
         {
             "name": "Daniel Bojdo",

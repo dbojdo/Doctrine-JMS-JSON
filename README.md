@@ -4,12 +4,12 @@ The DBAL Type supports anything that can be handled by JMS Serializer (scalar, a
 
 # Installation
 
-Add ***"webit/doctrine-jms-json": "~1.0"*** to the require section of your ***composer.json***
+Add ***"webit/doctrine-jms-json": "^2.0.0"*** to the require section of your ***composer.json***
 
 ```json
 {
     "require": {
-        "webit/doctrine-jms-json": "~1.0"
+        "webit/doctrine-jms-json": "^2.0.0"
     }
 }
 ```
