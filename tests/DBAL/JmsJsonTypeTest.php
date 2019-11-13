@@ -11,31 +11,25 @@ namespace Webit\DoctrineJmsJson\Tests\DBAL;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\Type;
+use JMS\Serializer\Serializer;
 use JMS\Serializer\SerializerInterface;
+use Prophecy\Prophecy\ObjectProphecy;
 use Webit\DoctrineJmsJson\DBAL\Exception\JmsJsonTypeInitializationException;
 use Webit\DoctrineJmsJson\DBAL\JmsJsonType;
 use Webit\DoctrineJmsJson\Serializer\Type\SerializerTypeResolver;
 
 class JmsJsonTypeTest extends \PHPUnit_Framework_TestCase
 {
-    /**
-     * @var JmsJsonType
-     */
+    /** @var JmsJsonType */
     private $type;
 
-    /**
-     * @var AbstractPlatform|\Mockery\MockInterface
-     */
+    /** @var AbstractPlatform|ObjectProphecy */
     private $platform;
 
-    /**
-     * @var Serializer|\Mockery\MockInterface
-     */
+    /** @var Serializer|ObjectProphecy */
     private $serializer;
 
-    /**
-     * @var SerializerTypeResolver|\Mockery\MockInterface
-     */
+    /** @var SerializerTypeResolver|ObjectProphecy */
     private $typeResolver;
 
     public function setUp()
@@ -46,9 +40,9 @@ class JmsJsonTypeTest extends \PHPUnit_Framework_TestCase
         }
 
         $this->type = Type::getType(JmsJsonType::NAME);
-        $this->platform = \Mockery::mock('Doctrine\DBAL\Platforms\AbstractPlatform');
-        $this->serializer = \Mockery::mock('JMS\Serializer\Serializer');
-        $this->typeResolver = \Mockery::mock('Webit\DoctrineJmsJson\Serializer\Type\SerializerTypeResolver');
+        $this->platform = $this->prophesize('Doctrine\DBAL\Platforms\AbstractPlatform');
+        $this->serializer = $this->prophesize('JMS\Serializer\Serializer');
+        $this->typeResolver = $this->prophesize('Webit\DoctrineJmsJson\Serializer\Type\SerializerTypeResolver');
     }
 
     /**
@@ -60,15 +54,11 @@ class JmsJsonTypeTest extends \PHPUnit_Framework_TestCase
 
         $sqlDeclaration = 'SQL Declaration';
 
-        $this->platform
-            ->shouldReceive('getJsonTypeDeclarationSQL')
-            ->with($fieldDeclaration)
-            ->once()
-            ->andReturn($sqlDeclaration);
+        $this->platform->getJsonTypeDeclarationSQL($fieldDeclaration)->willReturn($sqlDeclaration);
 
         $this->assertEquals(
             $sqlDeclaration,
-            $this->type->getSQLDeclaration($fieldDeclaration, $this->platform)
+            $this->type->getSQLDeclaration($fieldDeclaration, $this->platform->reveal())
         );
     }
 
@@ -77,7 +67,7 @@ class JmsJsonTypeTest extends \PHPUnit_Framework_TestCase
      */
     public function shouldRequiresSQLCommentHint()
     {
-        $this->assertTrue($this->type->requiresSQLCommentHint($this->platform));
+        $this->assertTrue($this->type->requiresSQLCommentHint($this->platform->reveal()));
     }
 
     /**
@@ -95,10 +85,10 @@ class JmsJsonTypeTest extends \PHPUnit_Framework_TestCase
     {
         $this->initializeJmsJsonType(null, null);
 
-        JmsJsonType::initialize($this->serializer, $this->typeResolver);
+        JmsJsonType::initialize($this->serializer->reveal(), $this->typeResolver->reveal());
 
         $this->setExpectedException('\Webit\DoctrineJmsJson\DBAL\Exception\JmsJsonTypeInitializationException');
-        JmsJsonType::initialize($this->serializer, $this->typeResolver);
+        JmsJsonType::initialize($this->serializer->reveal(), $this->typeResolver->reveal());
     }
 
     /**
@@ -110,7 +100,10 @@ class JmsJsonTypeTest extends \PHPUnit_Framework_TestCase
     {
         $this->initializeJmsJsonType(null, null);
 
-        $this->type->convertToPHPValue('some-data', $this->platform);
+        $this->type->convertToPHPValue(
+            json_encode(array('_jms_type' => 'string', 'data' => 'some-string')),
+            $this->platform->reveal()
+        );
     }
 
     /**
@@ -122,7 +115,17 @@ class JmsJsonTypeTest extends \PHPUnit_Framework_TestCase
     {
         $this->initializeJmsJsonType(null, null);
 
-        $this->type->convertToDatabaseValue('xxxx', $this->platform);
+        $this->type->convertToDatabaseValue('xxxx', $this->platform->reveal());
+    }
+
+    /**
+     * @test
+     * @expectedException \RuntimeException
+     */
+    public function shouldThrowExceptionWhenJmsTypeCouldNotBeResolvedFromTheDatabaseValue()
+    {
+        $this->initializeJmsJsonType($this->serializer->reveal(), $this->typeResolver->reveal());
+        $this->type->convertToPHPValue(json_encode(array('data' => 'some-data')), $this->platform->reveal());
     }
 
     /**

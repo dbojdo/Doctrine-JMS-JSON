@@ -15,6 +15,7 @@ use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\Type;
 use JMS\Serializer\SerializerBuilder;
 use JMS\Serializer\SerializerInterface;
+use Prophecy\Prophecy\ObjectProphecy;
 use Webit\DoctrineJmsJson\DBAL\Exception\JmsJsonTypeInitializationException;
 use Webit\DoctrineJmsJson\DBAL\JmsJsonType;
 use Webit\DoctrineJmsJson\Serializer\Type\DefaultSerializerTypeResolver;
@@ -22,29 +23,21 @@ use Webit\DoctrineJmsJson\Serializer\Type\SerializerTypeResolver;
 
 class JmsJsonTypeFunctionalTest extends \PHPUnit_Framework_TestCase
 {
-    /**
-     * @var AbstractPlatform|\Mockery\MockInterface
-     */
+    /** @var AbstractPlatform|ObjectProphecy */
     private $platform;
 
-    /**
-     * @var JmsJsonType
-     */
+    /** @var JmsJsonType */
     private $type;
 
-    /**
-     * @var SerializerInterface
-     */
+    /** @var SerializerInterface */
     private $serializer;
 
-    /**
-     * @var SerializerTypeResolver
-     */
+    /** @var SerializerTypeResolver */
     private $typeResolver;
 
     protected function setUp()
     {
-        $this->platform = \Mockery::mock('Doctrine\DBAL\Platforms\AbstractPlatform');
+        $this->platform = $this->prophesize('Doctrine\DBAL\Platforms\AbstractPlatform');
 
         $this->serializer = $this->buildSerializer();
         $this->typeResolver = new DefaultSerializerTypeResolver();
@@ -70,7 +63,7 @@ class JmsJsonTypeFunctionalTest extends \PHPUnit_Framework_TestCase
      */
     public function shouldConvertToDatabaseValue($phpValue, $databaseValue)
     {
-        $this->assertEquals($databaseValue, $this->type->convertToDatabaseValue($phpValue, $this->platform));
+        $this->assertEquals($databaseValue, $this->type->convertToDatabaseValue($phpValue, $this->platform->reveal()));
     }
 
     /**
@@ -81,7 +74,7 @@ class JmsJsonTypeFunctionalTest extends \PHPUnit_Framework_TestCase
      */
     public function shouldConvertToPhpValue($phpValue, $databaseValue)
     {
-        $this->assertEquals($phpValue, $this->type->convertToPHPValue($databaseValue, $this->platform));
+        $this->assertEquals($phpValue, $this->type->convertToPHPValue($databaseValue, $this->platform->reveal()));
     }
 
     public function values()
@@ -155,6 +148,25 @@ class JmsJsonTypeFunctionalTest extends \PHPUnit_Framework_TestCase
                 )
             )
         );
+    }
+
+    /**
+     * @test
+     */
+    public function itIsBackwardCompatibleInDatabaseToPhpValueConversion()
+    {
+        $expectedPhpValue = new Dummy(
+            $name = 'some-name',
+            $date = date_create('2019-11-02 12:33:21')
+        );
+
+        $databaseValue = sprintf(
+            '%s::%s',
+            get_class($expectedPhpValue),
+            $this->serializer->serialize($expectedPhpValue, 'json')
+        );
+
+        $this->assertEquals($expectedPhpValue, $this->type->convertToPHPValue($databaseValue, $this->platform->reveal()));
     }
 
     /**

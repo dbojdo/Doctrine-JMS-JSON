@@ -79,14 +79,15 @@ class JmsJsonType extends Type
             return null;
         }
 
-        $arData = @json_decode($value, true);
-        $type = $arData['_jms_type'];
-        $phpValue = $arData['data'];
+        list($type, $phpValue) = $this->resolveJmsTypeAndData($value);
+        if (!$type) {
+            throw new \RuntimeException('Could not find JMS type in the database value.');
+        }
 
         if (is_array($phpValue)) {
             $phpValue = $this->serializer()->fromArray($phpValue, $type);
         } else {
-            $phpValue = $this->serializer()->fromArray(array($phpValue), sprintf('array<%s>', $type));
+            $phpValue = $this->serializer()->fromArray((array)$phpValue, sprintf('array<%s>', $type));
             $phpValue = array_shift($phpValue);
         }
 
@@ -157,5 +158,24 @@ class JmsJsonType extends Type
     private function fixCollection($phpValue)
     {
         return new ArrayCollection((array) $phpValue);
+    }
+
+    private function resolveJmsTypeAndData($value)
+    {
+        $arData = @json_decode($value, true);
+        if (json_last_error() === JSON_ERROR_NONE) {
+            return array(
+                isset($arData['_jms_type']) ? $arData['_jms_type'] : null,
+                isset($arData['data']) ? $arData['data'] : null
+            );
+        }
+
+        // try backward compatibility
+        @list($type, $data) = explode('::', $value, 2);
+        if ($data) {
+            $data = @json_decode($data, true);
+        }
+
+        return array($type, $data);
     }
 }

@@ -154,3 +154,15 @@ See [WebitDoctrineJsonBundle](https://github.com/dbojdo/Doctrine-JSON-Bundle) Sy
 
     composer install
     ./vendor/bin/phpunit
+
+# Change log
+
+## Version 2.0.0
+
+Introduces support for native JSON type database field. Internally data are stored in a valid JSON format ('{"_jms_type": "Deserialisation Type", "data": "DATA TO BE DESERIALISED"}').
+This breaks backwards compatibility with version **1.x**. Version **1.x** cannot be upgraded to **2.x** without manual conversion of the saved data.
+
+## Version 2.1.0
+
+Provides backwards compatibility with version **1.x** on conversion to PHP Value (reading from the database).
+Please note, the data read from the format of version **1.x** will be converted automatically to the new format during flush process of the entity.
