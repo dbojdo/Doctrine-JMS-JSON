@@ -12,13 +12,15 @@ use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\Type;
 use JMS\Serializer\Serializer;
+use JMS\Serializer\SerializerBuilder;
 use JMS\Serializer\SerializerInterface;
+use PHPUnit\Framework\TestCase;
 use Prophecy\Prophecy\ObjectProphecy;
 use Webit\DoctrineJmsJson\DBAL\Exception\JmsJsonTypeInitializationException;
 use Webit\DoctrineJmsJson\DBAL\JmsJsonType;
 use Webit\DoctrineJmsJson\Serializer\Type\SerializerTypeResolver;
 
-class JmsJsonTypeTest extends \PHPUnit_Framework_TestCase
+class JmsJsonTypeTest extends TestCase
 {
     /** @var JmsJsonType */
     private $type;
@@ -26,23 +28,33 @@ class JmsJsonTypeTest extends \PHPUnit_Framework_TestCase
     /** @var AbstractPlatform|ObjectProphecy */
     private $platform;
 
-    /** @var Serializer|ObjectProphecy */
+    /** @var Serializer */
     private $serializer;
 
     /** @var SerializerTypeResolver|ObjectProphecy */
     private $typeResolver;
 
-    public function setUp()
+    public function setUp(): void
     {
         try {
-            Type::addType(JmsJsonType::NAME, 'Webit\DoctrineJmsJson\DBAL\JmsJsonType');
+            Type::addType(JmsJsonType::NAME, JmsJsonType::class);
         } catch (DBALException $e) {
         }
 
         $this->type = Type::getType(JmsJsonType::NAME);
-        $this->platform = $this->prophesize('Doctrine\DBAL\Platforms\AbstractPlatform');
-        $this->serializer = $this->prophesize('JMS\Serializer\Serializer');
-        $this->typeResolver = $this->prophesize('Webit\DoctrineJmsJson\Serializer\Type\SerializerTypeResolver');
+        $this->platform = $this->prophesize(AbstractPlatform::class);
+        $this->serializer = $this->buildSerializer();
+        $this->typeResolver = $this->prophesize(SerializerTypeResolver::class);
+    }
+
+    /**
+     * @return \JMS\Serializer\SerializerInterface
+     */
+    private function buildSerializer()
+    {
+        $builder = SerializerBuilder::create();
+
+        return $builder->build();
     }
 
     /**
@@ -50,7 +62,7 @@ class JmsJsonTypeTest extends \PHPUnit_Framework_TestCase
      */
     public function shouldProvideSqlDeclaration()
     {
-        $fieldDeclaration = array('field' => 'declaration');
+        $fieldDeclaration = ['field' => 'declaration'];
 
         $sqlDeclaration = 'SQL Declaration';
 
@@ -85,34 +97,35 @@ class JmsJsonTypeTest extends \PHPUnit_Framework_TestCase
     {
         $this->initializeJmsJsonType(null, null);
 
-        JmsJsonType::initialize($this->serializer->reveal(), $this->typeResolver->reveal());
+        JmsJsonType::initialize($this->serializer, $this->typeResolver->reveal());
 
-        $this->setExpectedException('\Webit\DoctrineJmsJson\DBAL\Exception\JmsJsonTypeInitializationException');
-        JmsJsonType::initialize($this->serializer->reveal(), $this->typeResolver->reveal());
+        $this->expectException(JmsJsonTypeInitializationException::class);
+        JmsJsonType::initialize($this->serializer, $this->typeResolver->reveal());
     }
 
     /**
      * @test
-     * @expectedException \Webit\DoctrineJmsJson\DBAL\Exception\JmsJsonTypeInitializationException
-     * @expectedExceptionMessageRegExp /serializer/
      */
     public function shouldThrowExceptionWhenSerializerNotSet()
     {
+        $this->expectException(JmsJsonTypeInitializationException::class);
+        $this->expectErrorMessageMatches('/serializer/');
         $this->initializeJmsJsonType(null, null);
 
         $this->type->convertToPHPValue(
-            json_encode(array('_jms_type' => 'string', 'data' => 'some-string')),
+            json_encode(['_jms_type' => 'string', 'data' => 'some-string']),
             $this->platform->reveal()
         );
     }
 
     /**
      * @test
-     * @expectedException \Webit\DoctrineJmsJson\DBAL\Exception\JmsJsonTypeInitializationException
-     * @expectedExceptionMessageRegExp /type\ resolver/
      */
     public function shouldThrowExceptionWhenTypeResolverNotSet()
     {
+        $this->expectException(JmsJsonTypeInitializationException::class);
+        $this->expectExceptionMessageMatches('/type\ resolver/');
+
         $this->initializeJmsJsonType(null, null);
 
         $this->type->convertToDatabaseValue('xxxx', $this->platform->reveal());
@@ -120,11 +133,12 @@ class JmsJsonTypeTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @test
-     * @expectedException \RuntimeException
      */
     public function shouldThrowExceptionWhenJmsTypeCouldNotBeResolvedFromTheDatabaseValue()
     {
-        $this->initializeJmsJsonType($this->serializer->reveal(), $this->typeResolver->reveal());
+        $this->expectException(\RuntimeException::class);
+
+        $this->initializeJmsJsonType($this->serializer, $this->typeResolver->reveal());
         $this->type->convertToPHPValue(json_encode(array('data' => 'some-data')), $this->platform->reveal());
     }
 
@@ -151,6 +165,7 @@ class JmsJsonTypeTest extends \PHPUnit_Framework_TestCase
     /**
      * @param SerializerInterface|null $serializer
      * @param SerializerTypeResolver|null $typeResolver
+     * @throws \ReflectionException
      */
     private function initializeWithReflection(
         SerializerInterface $serializer = null,

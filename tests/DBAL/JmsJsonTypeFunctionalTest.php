@@ -13,15 +13,17 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\Type;
+use JMS\Serializer\Serializer;
 use JMS\Serializer\SerializerBuilder;
 use JMS\Serializer\SerializerInterface;
+use PHPUnit\Framework\TestCase;
 use Prophecy\Prophecy\ObjectProphecy;
 use Webit\DoctrineJmsJson\DBAL\Exception\JmsJsonTypeInitializationException;
 use Webit\DoctrineJmsJson\DBAL\JmsJsonType;
 use Webit\DoctrineJmsJson\Serializer\Type\DefaultSerializerTypeResolver;
 use Webit\DoctrineJmsJson\Serializer\Type\SerializerTypeResolver;
 
-class JmsJsonTypeFunctionalTest extends \PHPUnit_Framework_TestCase
+class JmsJsonTypeFunctionalTest extends TestCase
 {
     /** @var AbstractPlatform|ObjectProphecy */
     private $platform;
@@ -29,21 +31,21 @@ class JmsJsonTypeFunctionalTest extends \PHPUnit_Framework_TestCase
     /** @var JmsJsonType */
     private $type;
 
-    /** @var SerializerInterface */
+    /** @var Serializer */
     private $serializer;
 
     /** @var SerializerTypeResolver */
     private $typeResolver;
 
-    protected function setUp()
+    protected function setUp(): void
     {
-        $this->platform = $this->prophesize('Doctrine\DBAL\Platforms\AbstractPlatform');
+        $this->platform = $this->prophesize(AbstractPlatform::class);
 
         $this->serializer = $this->buildSerializer();
         $this->typeResolver = new DefaultSerializerTypeResolver();
 
         try {
-            Type::addType(JmsJsonType::NAME, 'Webit\DoctrineJmsJson\DBAL\JmsJsonType');
+            Type::addType(JmsJsonType::NAME, JmsJsonType::class);
         } catch (DBALException $e) {
         }
 
@@ -81,73 +83,73 @@ class JmsJsonTypeFunctionalTest extends \PHPUnit_Framework_TestCase
     {
         $date = date_create('2019-11-02 12:33:21');
 
-        return array(
-            array(null, null),
-            array(1, json_encode(array('_jms_type' => 'integer', 'data' => 1))),
-            array(1.25, json_encode(array('_jms_type' => 'double', 'data' => 1.25))),
-            array(true, json_encode(array('_jms_type' => 'boolean', 'data' => true))),
-            array(false, json_encode(array('_jms_type' => 'boolean', 'data' => false))),
-            array('abcd', json_encode(array('_jms_type' => 'string', 'data' => 'abcd'))),
-            array(array('k1' => 'v1'), json_encode(array('_jms_type' => 'array<string,string>', 'data' => array('k1' => 'v1')))),
-            array(array('v1', 'v2'), json_encode(array('_jms_type' => 'array<integer,string>', 'data' => array('v1', 'v2')))),
-            array($date, json_encode(array('_jms_type' => 'DateTime', 'data' => $date->format(\DateTime::ISO8601)))),
-            array(
-                new ArrayCollection(array('v1', 'v2')),
-                json_encode(array('_jms_type' => 'Doctrine\Common\Collections\ArrayCollection<integer,string>', 'data' => array("v1", "v2")))
-            ),
-            array(
-                new ArrayCollection(array('k1' => 'v1', 'k2' => 'v2')),
-                json_encode(array('_jms_type' => 'Doctrine\Common\Collections\ArrayCollection<string,string>', 'data' => array("k1" => "v1", "k2" => "v2")))
-            ),
-            array(
+        return [
+            [null, null],
+            [1, json_encode(['_jms_type' => 'integer', 'data' => 1])],
+            [1.25, json_encode(['_jms_type' => 'double', 'data' => 1.25])],
+            [true, json_encode(['_jms_type' => 'boolean', 'data' => true])],
+            [false, json_encode(['_jms_type' => 'boolean', 'data' => false])],
+            ['abcd', json_encode(['_jms_type' => 'string', 'data' => 'abcd'])],
+            [['k1' => 'v1'], json_encode(['_jms_type' => 'array<string,string>', 'data' => ['k1' => 'v1']])],
+            [['v1', 'v2'], json_encode(['_jms_type' => 'array<integer,string>', 'data' => ['v1', 'v2']])],
+            [$date, json_encode(['_jms_type' => 'DateTime', 'data' => $date->format(\DateTime::ATOM)])],
+            [
+                new ArrayCollection(['v1', 'v2']),
+                json_encode(['_jms_type' => 'Doctrine\Common\Collections\ArrayCollection<integer,string>', 'data' => ["v1", "v2"]])
+            ],
+            [
+                new ArrayCollection(['k1' => 'v1', 'k2' => 'v2']),
+                json_encode(['_jms_type' => 'Doctrine\Common\Collections\ArrayCollection<string,string>', 'data' => ["k1" => "v1", "k2" => "v2"]])
+            ],
+            [
                 new ArrayCollection(
-                    array(
+                    [
                         new Dummy('item1', $date),
                         new Dummy('item2', $date)
-                    )
+                    ]
                 ),
                 json_encode(
-                    array(
+                    [
                         '_jms_type' => 'Doctrine\Common\Collections\ArrayCollection<integer,Webit\DoctrineJmsJson\Tests\DBAL\Dummy>',
-                        'data' => array(
-                            array('name' => 'item1', 'date' => $date->format(DATE_ISO8601)),
-                            array('name' => 'item2', 'date' => $date->format(DATE_ISO8601)),
-                        )
-                    )
+                        'data' => [
+                            ['name' => 'item1', 'date' => $date->format(\DateTime::ATOM)],
+                            ['name' => 'item2', 'date' => $date->format(\DateTime::ATOM)],
+                        ]
+                    ]
                 )
-            ),
-            array(
+            ],
+            [
                 new DummyAggregate(
                     123,
                     'myName',
                     new ArrayCollection(
-                        array(
+                        [
                             new Dummy('item1', $date),
                             new Dummy('item2', $date)
-                        )
+                        ]
                     )
                 ),
                 json_encode(
-                    array(
+                    [
                         '_jms_type' => 'Webit\DoctrineJmsJson\Tests\DBAL\DummyAggregate',
-                        'data' => array(
+                        'data' => [
                             'id' => 123,
                             'name' => 'myName',
-                            'items' => array(
-                                array(
+                            'items' => [
+                                [
                                     'name' => 'item1',
-                                    'date' => $date->format(DATE_ISO8601)
-                                ),
-                                array(
+                                    'date' => $date->format(\DateTime::ATOM)
+                                ],
+                                [
                                     'name' => 'item2',
-                                    'date' => $date->format(DATE_ISO8601)
-                                )
-                            )
-                        )
-                    )
+                                    'date' => $date->format(\DateTime::ATOM)
+                                ]
+                            ]
+                        ]
+                    ]
                 )
-            )
-        );
+            ]
+        ];
     }
 
     /**

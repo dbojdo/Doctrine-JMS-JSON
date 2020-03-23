@@ -9,16 +9,18 @@
 namespace Webit\DoctrineJmsJson\Tests\Serializer\Type;
 
 use Doctrine\Common\Collections\ArrayCollection;
+use PHPUnit\Framework\TestCase;
 use Webit\DoctrineJmsJson\Serializer\Type\DefaultSerializerTypeResolver;
+use Webit\DoctrineJmsJson\Serializer\Type\Exception\TypeNotResolvedException;
 
-class DefaultSerializerTypeResolverTest extends \PHPUnit_Framework_TestCase
+class DefaultSerializerTypeResolverTest extends TestCase
 {
     /**
      * @var DefaultSerializerTypeResolver
      */
     private $typeResolver;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->typeResolver = new DefaultSerializerTypeResolver();
     }
@@ -36,46 +38,46 @@ class DefaultSerializerTypeResolverTest extends \PHPUnit_Framework_TestCase
 
     public function values()
     {
-        return array(
-            array(1, 'integer'),
-            array(1.25, 'double'),
-            array(true, 'boolean'),
-            array(false, 'boolean'),
-            array('my-string', 'string'),
-            array(new \DateTime(), 'DateTime'),
-            array(array(), 'array'),
-            array(
-                array(
+        return [
+            [1, 'integer'],
+            [1.25, 'double'],
+            [true, 'boolean'],
+            [false, 'boolean'],
+            ['my-string', 'string'],
+            [new \DateTime(), 'DateTime'],
+            [[], 'array'],
+            [
+                [
                     new DummyClass()
-                ),
+                ],
                 'array<integer,Webit\DoctrineJmsJson\Tests\Serializer\Type\DummyClass>'
-            ),
-            array(
+            ],
+            [
                 new ArrayCollection(),
                 'Doctrine\Common\Collections\ArrayCollection'
-            ),
-            array(
-                new ArrayCollection(array(
+            ],
+            [
+                new ArrayCollection([
                     new DummyClass()
-                )),
+                ]),
                 'Doctrine\Common\Collections\ArrayCollection<integer,Webit\DoctrineJmsJson\Tests\Serializer\Type\DummyClass>'
-            ),
-            array(
+            ],
+            [
                 new DummyClass(),
                 'Webit\DoctrineJmsJson\Tests\Serializer\Type\DummyClass'
-            )
-        );
+            ]
+        ];
     }
 
-//    /**
-//     * @test
-//     * @expectedException \Webit\DoctrineJmsJson\Serializer\Type\Exception\TypeNotResolvedException
-//     */
-//    public function shouldThrowExceptionWhenTypeNotSupported()
-//    {
-//        $value = fopen(sys_get_temp_dir().'/' . md5(microtime()), 'w+');
-//        $this->typeResolver->resolveType($value);
-//    }
+    /**
+     * @test
+     */
+    public function shouldThrowExceptionWhenTypeNotSupported()
+    {
+        $this->expectException(TypeNotResolvedException::class);
+        $value = fopen(sys_get_temp_dir().'/' . md5(microtime()), 'w+');
+        $this->typeResolver->resolveType($value);
+    }
 }
 
 class DummyClass

@@ -8,25 +8,24 @@
 
 namespace Webit\DoctrineJmsJson\DBAL;
 
-use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\Type;
 use JMS\Serializer\Serializer;
 use Webit\DoctrineJmsJson\DBAL\Exception\JmsJsonTypeInitializationException;
 use Webit\DoctrineJmsJson\Serializer\Type\SerializerTypeResolver;
 
-class JmsJsonType extends Type
+final class JmsJsonType extends Type
 {
-    const NAME = 'jms_json';
+    public const NAME = 'jms_json';
 
-    /**
-     * @var Serializer
-     */
+    private const TYPE_KEY = '_jms_type';
+    private const DATA_KEY = 'data';
+    private const LEGACY_SEPARATOR = '::';
+
+    /** @var Serializer */
     private static $serializer;
 
-    /**
-     * @var SerializerTypeResolver
-     */
+    /** @var SerializerTypeResolver */
     private static $typeResolver;
 
     /**
@@ -62,10 +61,10 @@ class JmsJsonType extends Type
             return null;
         }
 
-        $dbValue = array(
-            '_jms_type' => $this->typeResolver()->resolveType($value),
-            'data' => $value
-        );
+        $dbValue = [
+            self::TYPE_KEY => $this->typeResolver()->resolveType($value),
+            self::DATA_KEY => $value
+        ];
 
         return $this->serializer()->serialize($dbValue, 'json');
     }
@@ -91,11 +90,7 @@ class JmsJsonType extends Type
             $phpValue = array_shift($phpValue);
         }
 
-        if (! $this->isCollection($type)) {
-            return $phpValue;
-        }
-
-        return $this->fixCollection($phpValue);
+        return $phpValue;
     }
 
     /**
@@ -142,36 +137,18 @@ class JmsJsonType extends Type
         return self::$typeResolver;
     }
 
-    /**
-     * @param string $type
-     * @return bool
-     */
-    private function isCollection($type)
-    {
-        return substr($type, -10) == 'Collection' || strpos($type, 'Collection<');
-    }
-
-    /**
-     * @param mixed $phpValue
-     * @return ArrayCollection
-     */
-    private function fixCollection($phpValue)
-    {
-        return new ArrayCollection((array) $phpValue);
-    }
-
     private function resolveJmsTypeAndData($value)
     {
         $arData = @json_decode($value, true);
         if (json_last_error() === JSON_ERROR_NONE) {
             return array(
-                isset($arData['_jms_type']) ? $arData['_jms_type'] : null,
-                isset($arData['data']) ? $arData['data'] : null
+                isset($arData[self::TYPE_KEY]) ? $arData[self::TYPE_KEY] : null,
+                isset($arData[self::DATA_KEY]) ? $arData[self::DATA_KEY] : null
             );
         }
 
         // try backward compatibility
-        @list($type, $data) = explode('::', $value, 2);
+        @list($type, $data) = explode(self::LEGACY_SEPARATOR, $value, 2);
         if ($data) {
             $data = @json_decode($data, true);
         }

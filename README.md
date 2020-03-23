@@ -9,7 +9,7 @@ Add ***"webit/doctrine-jms-json": "^2.0.0"*** to the require section of your ***
 ```json
 {
     "require": {
-        "webit/doctrine-jms-json": "^2.0.0"
+        "webit/doctrine-jms-json": "^3.0.0"
     }
 }
 ```
@@ -166,3 +166,7 @@ This breaks backwards compatibility with version **1.x**. Version **1.x** cannot
 
 Provides backwards compatibility with version **1.x** on conversion to PHP Value (reading from the database).
 Please note, the data read from the format of version **1.x** will be converted automatically to the new format during flush process of the entity.
+
+## Version 3.0.0
+
+Provides support for higher JMS Serializer versions (2.x, 3.x). This version required PHP >= 7.2.

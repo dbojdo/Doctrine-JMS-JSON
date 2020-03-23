@@ -16,7 +16,7 @@ class DefaultSerializerTypeResolver implements SerializerTypeResolver
      * @param mixed $value
      * @return string
      */
-    public function resolveType($value)
+    public function resolveType($value): string
     {
 
         if (is_scalar($value)) {

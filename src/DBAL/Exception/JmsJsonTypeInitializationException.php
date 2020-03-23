@@ -8,7 +8,6 @@
 
 namespace Webit\DoctrineJmsJson\DBAL\Exception;
 
-class JmsJsonTypeInitializationException extends \RuntimeException
+final class JmsJsonTypeInitializationException extends \RuntimeException
 {
-
 }

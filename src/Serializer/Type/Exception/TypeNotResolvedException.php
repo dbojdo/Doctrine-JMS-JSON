@@ -8,7 +8,6 @@
 
 namespace Webit\DoctrineJmsJson\Serializer\Type\Exception;
 
-class TypeNotResolvedException extends \OutOfBoundsException
+final class TypeNotResolvedException extends \OutOfBoundsException
 {
-
 }
