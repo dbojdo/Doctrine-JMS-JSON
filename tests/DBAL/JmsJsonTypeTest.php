@@ -97,10 +97,10 @@ class JmsJsonTypeTest extends TestCase
     {
         $this->initializeJmsJsonType(null, null);
 
-        JmsJsonType::initialize($this->serializer, $this->typeResolver->reveal());
+        JmsJsonType::initialize($this->serializer, $this->serializer, $this->typeResolver->reveal());
 
         $this->expectException(JmsJsonTypeInitializationException::class);
-        JmsJsonType::initialize($this->serializer, $this->typeResolver->reveal());
+        JmsJsonType::initialize($this->serializer, $this->serializer, $this->typeResolver->reveal());
     }
 
     /**
@@ -109,7 +109,6 @@ class JmsJsonTypeTest extends TestCase
     public function shouldThrowExceptionWhenSerializerNotSet()
     {
         $this->expectException(JmsJsonTypeInitializationException::class);
-        $this->expectErrorMessageMatches('/serializer/');
         $this->initializeJmsJsonType(null, null);
 
         $this->type->convertToPHPValue(
@@ -153,7 +152,7 @@ class JmsJsonTypeTest extends TestCase
 
         try {
             if ($serializer && $typeResolver) {
-                JmsJsonType::initialize($serializer, $typeResolver);
+                JmsJsonType::initialize($serializer, $serializer, $typeResolver);
                 return;
             }
         } catch (JmsJsonTypeInitializationException $e) {
@@ -176,6 +175,10 @@ class JmsJsonTypeTest extends TestCase
         $serializerProperty = $refObject->getProperty('serializer');
         $serializerProperty->setAccessible(true);
         $serializerProperty->setValue($serializer);
+
+        $arrayTransformerProperty = $refObject->getProperty('arrayTransformer');
+        $arrayTransformerProperty->setAccessible(true);
+        $arrayTransformerProperty->setValue($serializer);
 
         $typeResolverProperty = $refObject->getProperty('typeResolver');
         $typeResolverProperty->setAccessible(true);

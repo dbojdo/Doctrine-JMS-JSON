@@ -10,7 +10,8 @@ namespace Webit\DoctrineJmsJson\DBAL;
 
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\Type;
-use JMS\Serializer\Serializer;
+use JMS\Serializer\ArrayTransformerInterface;
+use JMS\Serializer\SerializerInterface;
 use Webit\DoctrineJmsJson\DBAL\Exception\JmsJsonTypeInitializationException;
 use Webit\DoctrineJmsJson\Serializer\Type\SerializerTypeResolver;
 
@@ -22,25 +23,30 @@ final class JmsJsonType extends Type
     private const DATA_KEY = 'data';
     private const LEGACY_SEPARATOR = '::';
 
-    /** @var Serializer */
+    /** @var SerializerInterface */
     private static $serializer;
+
+    /** @var ArrayTransformerInterface */
+    private static $arrayTransformer;
 
     /** @var SerializerTypeResolver */
     private static $typeResolver;
 
     /**
-     * @param Serializer $serializer
+     * @param SerializerInterface $serializer
+     * @param ArrayTransformerInterface $arrayTransformer
      * @param SerializerTypeResolver $typeResolver
      */
-    public static function initialize(Serializer $serializer, SerializerTypeResolver $typeResolver)
+    public static function initialize(SerializerInterface $serializer, ArrayTransformerInterface $arrayTransformer, SerializerTypeResolver $typeResolver)
     {
-        if (self::$serializer) {
+        if (self::$serializer || self::$arrayTransformer) {
             throw new JmsJsonTypeInitializationException(
                 'DBAL type of "jms_json" has been already initialized.'
             );
         }
 
         self::$serializer = $serializer;
+        self::$arrayTransformer = $arrayTransformer;
         self::$typeResolver = $typeResolver;
     }
 
@@ -84,9 +90,9 @@ final class JmsJsonType extends Type
         }
 
         if (is_array($phpValue)) {
-            $phpValue = $this->serializer()->fromArray($phpValue, $type);
+            $phpValue = $this->arrayTransformer()->fromArray($phpValue, $type);
         } else {
-            $phpValue = $this->serializer()->fromArray((array)$phpValue, sprintf('array<%s>', $type));
+            $phpValue = $this->arrayTransformer()->fromArray((array)$phpValue, sprintf('array<%s>', $type));
             $phpValue = array_shift($phpValue);
         }
 
@@ -110,7 +116,7 @@ final class JmsJsonType extends Type
     }
 
     /**
-     * @return Serializer
+     * @return SerializerInterface
      */
     private function serializer()
     {
@@ -121,6 +127,20 @@ final class JmsJsonType extends Type
         }
 
         return self::$serializer;
+    }
+
+    /**
+     * @return ArrayTransformerInterface
+     */
+    private function arrayTransformer()
+    {
+        if (!self::$arrayTransformer) {
+            throw new JmsJsonTypeInitializationException(
+                'DBAL type of "jms_json" has not been initialized properly as it requires array transformer to be configured.'
+            );
+        }
+
+        return self::$arrayTransformer;
     }
 
     /**

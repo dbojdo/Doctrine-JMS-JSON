@@ -34,15 +34,11 @@ class JmsJsonTypeFunctionalTest extends TestCase
     /** @var Serializer */
     private $serializer;
 
-    /** @var SerializerTypeResolver */
-    private $typeResolver;
-
     protected function setUp(): void
     {
         $this->platform = $this->prophesize(AbstractPlatform::class);
 
         $this->serializer = $this->buildSerializer();
-        $this->typeResolver = new DefaultSerializerTypeResolver();
 
         try {
             Type::addType(JmsJsonType::NAME, JmsJsonType::class);
@@ -50,7 +46,7 @@ class JmsJsonTypeFunctionalTest extends TestCase
         }
 
         try {
-            JmsJsonType::initialize($this->serializer, $this->typeResolver);
+            JmsJsonType::initialize($this->serializer, $this->serializer, new DefaultSerializerTypeResolver());
         } catch (JmsJsonTypeInitializationException $e) {
         }
 
