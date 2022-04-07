@@ -10,7 +10,7 @@ namespace Webit\DoctrineJmsJson\Tests\DBAL;
 
 use JMS\Serializer\Annotation as JMS;
 use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Exception as DBALException;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\Type;
 use JMS\Serializer\Serializer;
@@ -22,6 +22,10 @@ use Webit\DoctrineJmsJson\DBAL\Exception\JmsJsonTypeInitializationException;
 use Webit\DoctrineJmsJson\DBAL\JmsJsonType;
 use Webit\DoctrineJmsJson\Serializer\Type\DefaultSerializerTypeResolver;
 use Webit\DoctrineJmsJson\Serializer\Type\SerializerTypeResolver;
+
+if(!class_exists(DBALException::class)) {
+    class_alias(\Doctrine\DBAL\DBALException::class, DBALException::class);
+}
 
 class JmsJsonTypeFunctionalTest extends TestCase
 {
