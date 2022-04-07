@@ -8,7 +8,7 @@
 
 namespace Webit\DoctrineJmsJson\Tests\DBAL;
 
-use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Exception as DBALException;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\Type;
 use JMS\Serializer\Serializer;
@@ -19,6 +19,10 @@ use Prophecy\Prophecy\ObjectProphecy;
 use Webit\DoctrineJmsJson\DBAL\Exception\JmsJsonTypeInitializationException;
 use Webit\DoctrineJmsJson\DBAL\JmsJsonType;
 use Webit\DoctrineJmsJson\Serializer\Type\SerializerTypeResolver;
+
+if(!class_exists(DBALException::class)) {
+    class_alias(\Doctrine\DBAL\DBALException::class, DBALException::class);
+}
 
 class JmsJsonTypeTest extends TestCase
 {
