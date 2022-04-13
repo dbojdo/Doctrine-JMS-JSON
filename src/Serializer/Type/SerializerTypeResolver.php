@@ -14,5 +14,5 @@ interface SerializerTypeResolver
      * @param mixed $value
      * @return string
      */
-    public function resolveType($value);
+    public function resolveType($value): string;
 }

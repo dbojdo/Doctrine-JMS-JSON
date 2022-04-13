@@ -142,7 +142,7 @@ class JmsJsonTypeTest extends TestCase
         $this->expectException(\RuntimeException::class);
 
         $this->initializeJmsJsonType($this->serializer, $this->typeResolver->reveal());
-        $this->type->convertToPHPValue(json_encode(array('data' => 'some-data')), $this->platform->reveal());
+        $this->type->convertToPHPValue(json_encode(['data' => 'some-data']), $this->platform->reveal());
     }
 
     /**

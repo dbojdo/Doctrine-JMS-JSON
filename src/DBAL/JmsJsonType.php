@@ -53,9 +53,9 @@ final class JmsJsonType extends Type
     /**
      * @inheritdoc
      */
-    public function getSQLDeclaration(array $fieldDeclaration, AbstractPlatform $platform)
+    public function getSQLDeclaration(array $column, AbstractPlatform $platform): string
     {
-        return $platform->getJsonTypeDeclarationSQL($fieldDeclaration);
+        return $platform->getJsonTypeDeclarationSQL($column);
     }
 
     /**
@@ -102,7 +102,7 @@ final class JmsJsonType extends Type
     /**
      * @inheritdoc
      */
-    public function getName()
+    public function getName(): string
     {
         return self::NAME;
     }
@@ -110,7 +110,7 @@ final class JmsJsonType extends Type
     /**
      * @inheritdoc
      */
-    public function requiresSQLCommentHint(AbstractPlatform $platform)
+    public function requiresSQLCommentHint(AbstractPlatform $platform): bool
     {
         return true;
     }
@@ -118,7 +118,7 @@ final class JmsJsonType extends Type
     /**
      * @return SerializerInterface
      */
-    private function serializer()
+    private function serializer(): SerializerInterface
     {
         if (!self::$serializer) {
             throw new JmsJsonTypeInitializationException(
@@ -132,7 +132,7 @@ final class JmsJsonType extends Type
     /**
      * @return ArrayTransformerInterface
      */
-    private function arrayTransformer()
+    private function arrayTransformer(): ArrayTransformerInterface
     {
         if (!self::$arrayTransformer) {
             throw new JmsJsonTypeInitializationException(
@@ -146,7 +146,7 @@ final class JmsJsonType extends Type
     /**
      * @return SerializerTypeResolver
      */
-    private function typeResolver()
+    private function typeResolver(): SerializerTypeResolver
     {
         if (!self::$typeResolver) {
             throw new JmsJsonTypeInitializationException(
@@ -157,14 +157,14 @@ final class JmsJsonType extends Type
         return self::$typeResolver;
     }
 
-    private function resolveJmsTypeAndData($value)
+    private function resolveJmsTypeAndData($value): array
     {
         $arData = @json_decode($value, true);
         if (json_last_error() === JSON_ERROR_NONE) {
-            return array(
-                isset($arData[self::TYPE_KEY]) ? $arData[self::TYPE_KEY] : null,
-                isset($arData[self::DATA_KEY]) ? $arData[self::DATA_KEY] : null
-            );
+            return [
+                $arData[self::TYPE_KEY] ?? null,
+                $arData[self::DATA_KEY] ?? null
+            ];
         }
 
         // try backward compatibility
@@ -173,6 +173,6 @@ final class JmsJsonType extends Type
             $data = @json_decode($data, true);
         }
 
-        return array($type, $data);
+        return [$type, $data];
     }
 }

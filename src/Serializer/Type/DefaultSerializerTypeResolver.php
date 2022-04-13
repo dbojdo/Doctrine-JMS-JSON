@@ -8,17 +8,16 @@
 
 namespace Webit\DoctrineJmsJson\Serializer\Type;
 
+use Doctrine\Common\Collections\Collection;
 use Webit\DoctrineJmsJson\Serializer\Type\Exception\TypeNotResolvedException;
 
-class DefaultSerializerTypeResolver implements SerializerTypeResolver
+final class DefaultSerializerTypeResolver implements SerializerTypeResolver
 {
     /**
-     * @param mixed $value
-     * @return string
+     * @inheritDoc
      */
     public function resolveType($value): string
     {
-
         if (is_scalar($value)) {
             return gettype($value);
         }
@@ -39,7 +38,7 @@ class DefaultSerializerTypeResolver implements SerializerTypeResolver
                 function (array $arValue) {
                     $keys = array_keys($arValue);
 
-                    if ($keys == array()) {
+                    if ($keys === []) {
                         return null;
                     }
 
@@ -64,7 +63,7 @@ class DefaultSerializerTypeResolver implements SerializerTypeResolver
                 function (\Doctrine\Common\Collections\Collection $collection) {
                     $keys = $collection->getKeys();
 
-                    if ($keys === array()) {
+                    if ($keys === []) {
                         return null;
                     }
 
@@ -73,8 +72,13 @@ class DefaultSerializerTypeResolver implements SerializerTypeResolver
             );
         }
 
-        if ($value instanceof \DateTime) {
-            return sprintf("DateTime");
+        switch (true) {
+            case $value instanceof \DateTimeImmutable:
+                return "DateTimeImmutable";
+            case $value instanceof \DateTime:
+                return "DateTime";
+            case $value instanceof \DateTimeInterface:
+                return "DateTimeInterface";
         }
 
         if (is_object($value)) {
@@ -85,13 +89,13 @@ class DefaultSerializerTypeResolver implements SerializerTypeResolver
     }
 
     /**
-     * @param Collection $collection
-     * @param \callable $collectionType
-     * @param \callable $firstItem
-     * @param \callable $keyType
+     * @param array|Collection $collection
+     * @param callable $collectionType
+     * @param callable $firstItem
+     * @param callable $keyType
      * @return string
      */
-    private function resolveCollectionType($collection, $collectionType, $firstItem, $keyType)
+    private function resolveCollectionType($collection, callable $collectionType, callable $firstItem, callable $keyType): string
     {
         $type = call_user_func($collectionType, $collection);
         $item = call_user_func($firstItem, $collection);
