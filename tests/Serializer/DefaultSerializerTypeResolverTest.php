@@ -31,48 +31,58 @@ class DefaultSerializerTypeResolverTest extends TestCase
      * @test
      * @dataProvider values
      */
-    public function shouldResolveTypeByValue($value, $type)
+    public function shouldResolveTypeByValue($value, $type): void
     {
         $this->assertEquals($type, $this->typeResolver->resolveType($value));
     }
 
     public function values()
     {
-        return [
-            [1, 'integer'],
-            [1.25, 'double'],
-            [true, 'boolean'],
-            [false, 'boolean'],
-            ['my-string', 'string'],
-            [new \DateTime(), 'DateTime'],
-            [[], 'array'],
-            [
-                [
-                    new DummyClass()
-                ],
-                'array<integer,Webit\DoctrineJmsJson\Tests\Serializer\Type\DummyClass>'
-            ],
-            [
-                new ArrayCollection(),
-                'Doctrine\Common\Collections\ArrayCollection'
-            ],
-            [
-                new ArrayCollection([
-                    new DummyClass()
-                ]),
-                'Doctrine\Common\Collections\ArrayCollection<integer,Webit\DoctrineJmsJson\Tests\Serializer\Type\DummyClass>'
-            ],
-            [
-                new DummyClass(),
-                'Webit\DoctrineJmsJson\Tests\Serializer\Type\DummyClass'
-            ]
+        yield [1, 'integer'];
+        yield [1.25, 'double'];
+        yield [true, 'boolean'];
+        yield [false, 'boolean'];
+        yield ['my-string', 'string'];
+        yield [new \DateTime(), 'DateTime'];
+        yield [[], 'array'];
+        yield [
+            [new DummyClass()],
+            'array<integer,Webit\DoctrineJmsJson\Tests\Serializer\Type\DummyClass>'
+        ];
+        yield [
+            new ArrayCollection(),
+            'Doctrine\Common\Collections\ArrayCollection'
+        ];
+        yield [
+            new ArrayCollection([new DummyClass()]),
+            'Doctrine\Common\Collections\ArrayCollection<integer,Webit\DoctrineJmsJson\Tests\Serializer\Type\DummyClass>'
+        ];
+        yield [
+            new DummyClass(),
+            'Webit\DoctrineJmsJson\Tests\Serializer\Type\DummyClass'
+        ];
+        yield [
+            DummyEnum::One,
+            "enum<'Webit\DoctrineJmsJson\Tests\Serializer\Type\DummyEnum', 'name'>"
+        ];
+        yield [
+            DummyEnumInt::One,
+            "enum<'Webit\DoctrineJmsJson\Tests\Serializer\Type\DummyEnumInt', 'value'>"
+        ];
+        yield [
+            DummyEnumString::One,
+            "enum<'Webit\DoctrineJmsJson\Tests\Serializer\Type\DummyEnumString', 'value'>"
+        ];
+        yield [
+            [DummyEnumString::One, DummyEnumString::Two],
+            "array<integer,enum<'Webit\DoctrineJmsJson\Tests\Serializer\Type\DummyEnumString', 'value'>>"
         ];
     }
 
     /**
      * @test
      */
-    public function shouldThrowExceptionWhenTypeNotSupported()
+    public function shouldThrowExceptionWhenTypeNotSupported(): void
     {
         $this->expectException(TypeNotResolvedException::class);
         $value = fopen(sys_get_temp_dir().'/' . md5(microtime()), 'w+');
@@ -83,4 +93,19 @@ class DefaultSerializerTypeResolverTest extends TestCase
 class DummyClass
 {
 
+}
+
+enum DummyEnum {
+    case One;
+}
+
+enum DummyEnumInt: int
+{
+    case One = 1;
+}
+
+enum DummyEnumString: string
+{
+    case One = 'one';
+    case Two = 'two';
 }

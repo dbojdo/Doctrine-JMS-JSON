@@ -81,6 +81,10 @@ final class DefaultSerializerTypeResolver implements SerializerTypeResolver
                 return "DateTimeInterface";
         }
 
+        if (is_a($value, \UnitEnum::class, true)) {
+            return "enum<'".$value::class."', '".($value instanceof \BackedEnum ? 'value' : 'name')."'>";
+        }
+
         if (is_object($value)) {
             return get_class($value);
         }
