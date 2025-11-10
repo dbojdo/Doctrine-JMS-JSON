@@ -37,7 +37,7 @@ final class JmsJsonType extends Type
      * @param ArrayTransformerInterface $arrayTransformer
      * @param SerializerTypeResolver $typeResolver
      */
-    public static function initialize(SerializerInterface $serializer, ArrayTransformerInterface $arrayTransformer, SerializerTypeResolver $typeResolver)
+    public static function initialize(SerializerInterface $serializer, ArrayTransformerInterface $arrayTransformer, SerializerTypeResolver $typeResolver): void
     {
         if (self::$serializer || self::$arrayTransformer) {
             throw new JmsJsonTypeInitializationException(
@@ -61,7 +61,7 @@ final class JmsJsonType extends Type
     /**
      * @inheritdoc
      */
-    public function convertToDatabaseValue($value, AbstractPlatform $platform)
+    public function convertToDatabaseValue(mixed $value, AbstractPlatform $platform): mixed
     {
         if ($value === null || $value === '') {
             return null;
@@ -78,7 +78,7 @@ final class JmsJsonType extends Type
     /**
      * @inheritdoc
      */
-    public function convertToPHPValue($value, AbstractPlatform $platform)
+    public function convertToPHPValue(mixed $value, AbstractPlatform $platform): mixed
     {
         if($value === null) {
             return null;
